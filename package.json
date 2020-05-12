@@ -9,14 +9,13 @@
   "keywords": [
     "react-native",
     "instagram",
-    "snapchat",
     "story",
     "share"
   ],
   "author": "Johannes Sorg <johannes@sorg.me>",
   "license": "MIT",
   "peerDependencies": {
-    "react-native": "^0.41.2"
+    "react-native": "^0.60.5"
   },
   "devDependencies": {
     "babel-eslint": "^10.0.1",

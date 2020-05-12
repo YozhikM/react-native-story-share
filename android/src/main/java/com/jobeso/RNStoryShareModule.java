@@ -14,15 +14,6 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
-import com.snapchat.kit.sdk.SnapCreative;
-import com.snapchat.kit.sdk.creative.api.SnapCreativeKitApi;
-import com.snapchat.kit.sdk.creative.exceptions.SnapMediaSizeException;
-import com.snapchat.kit.sdk.creative.media.SnapMediaFactory;
-import com.snapchat.kit.sdk.creative.media.SnapPhotoFile;
-import com.snapchat.kit.sdk.creative.media.SnapSticker;
-import com.snapchat.kit.sdk.creative.models.SnapContent;
-import com.snapchat.kit.sdk.creative.models.SnapLiveCameraContent;
-import com.snapchat.kit.sdk.creative.models.SnapPhotoContent;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -49,13 +40,9 @@ public class RNStoryShareModule extends ReactContextBaseJavaModule {
   private static final String MEDIA_TYPE_IMAGE = "image/*";
 
   private static final String instagramScheme = "com.instagram.android";
-  private static final String snapchatScheme = "com.snapchat.android";
-
-  private final ReactApplicationContext reactContext;
 
   public RNStoryShareModule(ReactApplicationContext reactContext) {
     super(reactContext);
-    this.reactContext = reactContext;
   }
 
   @Override
@@ -89,7 +76,7 @@ public class RNStoryShareModule extends ReactContextBaseJavaModule {
     File folder = new File(namespaceDir);
 
     if (!folder.exists()) {
-      Boolean isCreated = folder.mkdir();
+      boolean isCreated = folder.mkdir();
 
       if(!isCreated){
         return externalDir + fileName;
@@ -150,21 +137,15 @@ public class RNStoryShareModule extends ReactContextBaseJavaModule {
   }
 
   private static void copyFile(File src, File dst) throws IOException {
-    InputStream in = new FileInputStream(src);
-    try {
-      OutputStream out = new FileOutputStream(dst);
-      try {
+    try (InputStream in = new FileInputStream(src)) {
+      try (OutputStream out = new FileOutputStream(dst)) {
         // Transfer bytes from in to out
         byte[] buf = new byte[1024];
         int len;
         while ((len = in.read(buf)) > 0) {
           out.write(buf, 0, len);
         }
-      } finally {
-        out.close();
       }
-    } finally {
-      in.close();
     }
   }
 
@@ -186,6 +167,7 @@ public class RNStoryShareModule extends ReactContextBaseJavaModule {
         Uri stickerAssetUri = FileProvider.getUriForFile(activity, providerName, stickerFile);
 
         intent.putExtra("interactive_asset_uri", stickerAssetUri );
+        assert activity != null;
         activity.grantUriPermission(
                 "com.instagram.android", stickerAssetUri , Intent.FLAG_GRANT_READ_URI_PERMISSION);
       }
@@ -204,6 +186,7 @@ public class RNStoryShareModule extends ReactContextBaseJavaModule {
         intent.putExtra("content_url", attributionLink);
       }
 
+      assert activity != null;
       if (activity.getPackageManager().resolveActivity(intent, 0) != null) {
         activity.startActivityForResult(intent, 0);
         promise.resolve(SUCCESS);
@@ -280,126 +263,29 @@ public class RNStoryShareModule extends ReactContextBaseJavaModule {
       }
 
       _shareToInstagram(backgroundFile, stickerFile, attributionLink, backgroundBottomColor, backgroundTopColor, promise);
-    } catch (NullPointerException e){
-      promise.reject(e.getMessage(), e);
-    } catch (Exception e){
-      promise.reject(UNKNOWN_ERROR, e);
-    } catch(Error e) {
-      promise.reject(e.getMessage(), e);
-    }
-  }
-
-  private void _shareToSnapchat(@Nullable File backgroundFile, @Nullable File stickerFile, @Nullable ReadableMap stickerOptions, @Nullable String attributionLink, Promise promise){
-    try {
-      Activity activity = getCurrentActivity();
-      SnapMediaFactory snapMediaFactory = SnapCreative.getMediaFactory(activity);
-      SnapContent snapContent;
-      SnapCreativeKitApi snapCreativeKitApi = SnapCreative.getApi(activity);
-
-      if(backgroundFile != null){
-        SnapPhotoFile photoFile = snapMediaFactory.getSnapPhotoFromFile(backgroundFile);
-        snapContent = new SnapPhotoContent(photoFile);
-      } else {
-        snapContent = new SnapLiveCameraContent();
-      }
-
-      if(stickerFile != null){
-        SnapSticker snapSticker = snapMediaFactory.getSnapStickerFromFile(stickerFile);
-
-        if(stickerOptions != null){
-          Integer width = stickerOptions.hasKey("width") ? stickerOptions.getInt("width") : null;
-          Integer height = stickerOptions.hasKey("height") ? stickerOptions.getInt("height") : null;
-
-          if(width != null){
-            snapSticker.setWidth(width);
-          }
-
-          if(height != null){
-            snapSticker.setHeight(height);
-          }
-        }
-
-        snapContent.setSnapSticker(snapSticker);
-      }
-
-      if(attributionLink != null){
-        snapContent.setAttachmentUrl(attributionLink);
-      }
-
-      snapCreativeKitApi.send(snapContent);
-      promise.resolve(SUCCESS);
-    } catch (SnapMediaSizeException e) {
-      promise.reject("RNStoryShare: Snapchat Exception", e.getMessage());
-    } catch (Exception e){
-      promise.reject(UNKNOWN_ERROR, e);
-    }
-  }
-
-  @ReactMethod
-  public void shareToSnapchat(ReadableMap config, Promise promise) {
-    try {
-      String backgroundAsset = config.hasKey("backgroundAsset") ? config.getString("backgroundAsset") : null;
-      String stickerAsset = config.hasKey("stickerAsset") ? config.getString("stickerAsset") : null;
-      ReadableMap stickerOptions = config.hasKey("stickerOptions") ? config.getMap("stickerOptions") : null;
-      String attributionLink = config.hasKey("attributionLink") ? config.getString("attributionLink") : null;
-      String type = config.hasKey("type") ? config.getString("type") : FILE;
-
-      File backgroundFile = null;
-      File stickerFile = null;
-
-      if(!type.equals(BASE64) ){
-        throw new Error(ERROR_TYPE_NOT_SUPPORTED);
-      }
-
-      if(backgroundAsset == null && stickerAsset == null){
-        throw new Error("backgroundAsset and stickerAsset are not allowed to both be null.");
-      }
-
-      if(backgroundAsset != null){
-        backgroundFile = getFileFromBase64String(backgroundAsset);
-
-        if(backgroundFile == null){
-          throw new Error("Could not create file from Base64 in RNStoryShare");
-        }
-      }
-
-      if(stickerAsset != null){
-        stickerFile = getFileFromBase64String(stickerAsset);
-
-        if(stickerFile == null){
-          throw new Error("Could not create file from Base64 in RNStoryShare");
-        }
-      }
-
-      _shareToSnapchat(backgroundFile, stickerFile, stickerOptions, attributionLink,promise);
-    } catch (Error e){
+    } catch (NullPointerException | Error e){
       promise.reject(e.getMessage(), e);
     } catch (Exception e){
       promise.reject(UNKNOWN_ERROR, e);
     }
   }
 
-
-  private void canOpenUrl(String packageScheme, Promise promise){
+  private void canOpenUrl(Promise promise){
     try{
       Activity activity = getCurrentActivity();
-      activity.getPackageManager().getPackageInfo(packageScheme, PackageManager.GET_ACTIVITIES);
+      assert activity != null;
+      activity.getPackageManager().getPackageInfo(RNStoryShareModule.instagramScheme, PackageManager.GET_ACTIVITIES);
       promise.resolve(true);
     } catch (PackageManager.NameNotFoundException e) {
       promise.resolve(false);
     } catch (Exception e) {
       promise.reject(new JSApplicationIllegalArgumentException(
-              "Could not check if URL '" + packageScheme + "' can be opened: " + e.getMessage()));
+              "Could not check if URL '" + RNStoryShareModule.instagramScheme + "' can be opened: " + e.getMessage()));
     }
   }
 
   @ReactMethod
   public void isInstagramAvailable(Promise promise){
-    canOpenUrl(instagramScheme, promise);
-  }
-
-  @ReactMethod
-  public void isSnapchatAvailable(Promise promise){
-    canOpenUrl(snapchatScheme, promise);
+    canOpenUrl(promise);
   }
 }
