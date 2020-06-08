@@ -1,4 +1,3 @@
-
 package com.jobeso;
 
 import android.app.Activity;
@@ -28,7 +27,7 @@ import java.util.Map;
 import java.util.Random;
 
 public class RNStoryShareModule extends ReactContextBaseJavaModule {
-  private static final String FILE= "file";
+  private static final String FILE = "file";
   private static final String BASE64 = "base64";
   private static final String INTERNAL_DIR_NAME = "rnstoryshare";
 
@@ -38,6 +37,9 @@ public class RNStoryShareModule extends ReactContextBaseJavaModule {
   private static final String ERROR_NO_PERMISSIONS = "Permissions Missing";
   private static final String TYPE_ERROR = "Type Error";
   private static final String MEDIA_TYPE_IMAGE = "image/*";
+  private static final String MEDIA_TYPE_VIDEO = "video/*";
+  private static final String PHOTO = "photo";
+  private static final String VIDEO = "video";
 
   private static final String instagramScheme = "com.instagram.android";
 
@@ -51,8 +53,8 @@ public class RNStoryShareModule extends ReactContextBaseJavaModule {
   }
 
   @Override
-  public Map<String, Object> getConstants() {
-    final Map<String, Object> constants = new HashMap<>();
+  public Map < String, Object > getConstants() {
+    final Map < String, Object > constants = new HashMap < > ();
     constants.put("BASE64", BASE64);
     constants.put("FILE", FILE);
     constants.put("SUCCESS", SUCCESS);
@@ -61,7 +63,7 @@ public class RNStoryShareModule extends ReactContextBaseJavaModule {
     return constants;
   }
 
-  private String generateFileName(){
+  private String generateFileName() {
     Random r = new Random();
     int hash = r.nextInt(999999);
 
@@ -78,7 +80,7 @@ public class RNStoryShareModule extends ReactContextBaseJavaModule {
     if (!folder.exists()) {
       boolean isCreated = folder.mkdir();
 
-      if(!isCreated){
+      if (!isCreated) {
         return externalDir + fileName;
       }
     }
@@ -86,7 +88,7 @@ public class RNStoryShareModule extends ReactContextBaseJavaModule {
     return namespaceDir + fileName;
   }
 
-  private static File createFile(final String path){
+  private static File createFile(final String path) {
     final File file = new File(path);
 
     if (!file.exists()) {
@@ -129,7 +131,7 @@ public class RNStoryShareModule extends ReactContextBaseJavaModule {
     return file;
   }
 
-  private File getFileFromBase64String(String base64ImageData){
+  private File getFileFromBase64String(String base64ImageData) {
     String backgroundAssetPath = getFilePath();
     String data = base64ImageData.substring(base64ImageData.indexOf(",") + 1);
 
@@ -142,47 +144,55 @@ public class RNStoryShareModule extends ReactContextBaseJavaModule {
         // Transfer bytes from in to out
         byte[] buf = new byte[1024];
         int len;
-        while ((len = in.read(buf)) > 0) {
+        while ((len = in .read(buf)) > 0) {
           out.write(buf, 0, len);
         }
       }
     }
   }
 
-  private void _shareToInstagram(@Nullable File backgroundFile, @Nullable File stickerFile, @Nullable String attributionLink, @Nullable String backgroundBottomColor, @Nullable String backgroundTopColor, Promise promise){
+  private void _shareToInstagram(
+          @Nullable File backgroundFile,
+          @Nullable File stickerFile,
+          @Nullable String attributionLink,
+          @Nullable String backgroundBottomColor,
+          @Nullable String backgroundTopColor,
+          String media,
+          Promise promise
+  ) {
     try {
       Intent intent = new Intent("com.instagram.share.ADD_TO_STORY");
       String providerName = this.getReactApplicationContext().getPackageName() + ".fileprovider";
       Activity activity = getCurrentActivity();
 
-      if(backgroundFile != null){
+      if (backgroundFile != null) {
         Uri backgroundImageUri = FileProvider.getUriForFile(activity, providerName, backgroundFile);
 
-        intent.setDataAndType(backgroundImageUri, MEDIA_TYPE_IMAGE);
+        intent.setDataAndType(backgroundImageUri, media.equals(VIDEO) ? MEDIA_TYPE_VIDEO : MEDIA_TYPE_IMAGE);
       } else {
         intent.setType(MEDIA_TYPE_IMAGE);
       }
 
-      if(stickerFile != null){
+      if (stickerFile != null) {
         Uri stickerAssetUri = FileProvider.getUriForFile(activity, providerName, stickerFile);
 
-        intent.putExtra("interactive_asset_uri", stickerAssetUri );
+        intent.putExtra("interactive_asset_uri", stickerAssetUri);
         assert activity != null;
         activity.grantUriPermission(
-                "com.instagram.android", stickerAssetUri , Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                "com.instagram.android", stickerAssetUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
       }
 
       intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-      if(backgroundBottomColor != null){
+      if (backgroundBottomColor != null) {
         intent.putExtra("bottom_background_color", backgroundBottomColor);
       }
 
-      if(backgroundTopColor != null){
+      if (backgroundTopColor != null) {
         intent.putExtra("top_background_color", backgroundTopColor);
       }
 
-      if(attributionLink != null){
+      if (attributionLink != null) {
         intent.putExtra("content_url", attributionLink);
       }
 
@@ -190,88 +200,79 @@ public class RNStoryShareModule extends ReactContextBaseJavaModule {
       if (activity.getPackageManager().resolveActivity(intent, 0) != null) {
         activity.startActivityForResult(intent, 0);
         promise.resolve(SUCCESS);
-      }else{
+      } else {
         throw new Exception("Couldn't open intent");
       }
-    }catch (Exception e){
+    } catch (Exception e) {
       promise.reject(UNKNOWN_ERROR, e);
     }
   }
 
   @ReactMethod
-  public void shareToInstagram(ReadableMap config, Promise promise){
-    try{
+  public void shareToInstagram(ReadableMap config, Promise promise) {
+    try {
       String backgroundAsset = config.hasKey("backgroundAsset") ? config.getString("backgroundAsset") : null;
       String backgroundBottomColor = config.hasKey("backgroundBottomColor") ? config.getString("backgroundBottomColor") : null;
       String backgroundTopColor = config.hasKey("backgroundTopColor") ? config.getString("backgroundTopColor") : null;
       String stickerAsset = config.hasKey("stickerAsset") ? config.getString("stickerAsset") : null;
       String attributionLink = config.hasKey("attributionLink") ? config.getString("attributionLink") : null;
       String type = config.hasKey("type") ? config.getString("type") : FILE;
+      String media = config.hasKey("media") ? config.getString("media") : PHOTO;
 
-      if(backgroundAsset == null && stickerAsset == null){
+      if (backgroundAsset == null && stickerAsset == null) {
         Error e = new Error("backgroundAsset and stickerAsset are not allowed to both be null.");
         promise.reject("Error in RNStory Share: No asset paths provided", e);
+      }
+
+      if (!media.equals(PHOTO) && !media.equals(VIDEO)) {
+        throw new Error(ERROR_TYPE_NOT_SUPPORTED);
       }
 
       File backgroundFile = null;
       File stickerFile = null;
 
-      switch(type){
-        case BASE64: {
-          if(backgroundAsset != null){
+      switch (type) {
+        case BASE64:
+        {
+          if (backgroundAsset != null) {
             backgroundFile = getFileFromBase64String(backgroundAsset);
 
-            if(backgroundFile == null){
+            if (backgroundFile == null) {
               throw new Error("Could not create file from Base64 in RNStoryShare");
             }
           }
 
-          if(stickerAsset != null){
+          if (stickerAsset != null) {
             stickerFile = getFileFromBase64String(stickerAsset);
 
-            if(stickerFile == null){
+            if (stickerFile == null) {
               throw new Error("Could not create file from Base64 in RNStoryShare");
             }
           }
           break;
         }
 
-        case FILE: {
+        case FILE:
+        {
           throw new Error(ERROR_TYPE_NOT_SUPPORTED);
-
-          // TODO implement
-//          if (ContextCompat.checkSelfPermission(getCurrentActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)
-//                  != PackageManager.PERMISSION_GRANTED) {
-//            throw new Error(ERROR_NO_PERMISSIONS);
-//          }
-//          if(backgroundAsset != null){
-//            File file = createFile(getFilePath());
-//            backgroundFile = new File(backgroundAsset);
-//
-//            copyFile(file, backgroundFile);
-//          }
-//
-//          if(stickerAsset != null){
-//            stickerFile = new File(stickerAsset);
-//          }
-//          break;
         }
 
-        default: {
+        default:
+        {
           throw new Error(ERROR_TYPE_NOT_SUPPORTED);
         }
       }
 
-      _shareToInstagram(backgroundFile, stickerFile, attributionLink, backgroundBottomColor, backgroundTopColor, promise);
-    } catch (NullPointerException | Error e){
+      _shareToInstagram(backgroundFile, stickerFile, attributionLink, backgroundBottomColor, backgroundTopColor, media, promise);
+    } catch (NullPointerException | Error e) {
       promise.reject(e.getMessage(), e);
-    } catch (Exception e){
+    } catch (Exception e) {
       promise.reject(UNKNOWN_ERROR, e);
     }
   }
 
-  private void canOpenUrl(Promise promise){
-    try{
+  private void canOpenUrl(Promise promise) {
+    try {
       Activity activity = getCurrentActivity();
       assert activity != null;
       activity.getPackageManager().getPackageInfo(RNStoryShareModule.instagramScheme, PackageManager.GET_ACTIVITIES);
@@ -285,7 +286,7 @@ public class RNStoryShareModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void isInstagramAvailable(Promise promise){
+  public void isInstagramAvailable(Promise promise) {
     canOpenUrl(promise);
   }
 }
