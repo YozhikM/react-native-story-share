@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		B3E7B58A1CC2AC0600A0062D /* RNStoryShare.m in Sources */ = {isa = PBXBuildFile; fileRef = B3E7B5891CC2AC0600A0062D /* RNStoryShare.m */; };
-		F310292E21A5EF6900F4F039 /* RNStoryShare.swift in Sources */ = {isa = PBXBuildFile; fileRef = F310292D21A5EF6900F4F039 /* RNStoryShare.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,10 +24,8 @@
 
 /* Begin PBXFileReference section */
 		134814201AA4EA6300B7C361 /* libRNStoryShare.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRNStoryShare.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		B3E7B5881CC2AC0600A0062D /* RNStoryShare.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNStoryShare.h; sourceTree = "<group>"; };
+		84275191248E2AFB00157FD5 /* RNStoryShare.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNStoryShare.h; sourceTree = "<group>"; };
 		B3E7B5891CC2AC0600A0062D /* RNStoryShare.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNStoryShare.m; sourceTree = "<group>"; };
-		F310292C21A5EF6800F4F039 /* RNStoryShare-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "RNStoryShare-Bridging-Header.h"; sourceTree = "<group>"; };
-		F310292D21A5EF6900F4F039 /* RNStoryShare.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RNStoryShare.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -53,11 +50,9 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
-				F310292D21A5EF6900F4F039 /* RNStoryShare.swift */,
-				B3E7B5881CC2AC0600A0062D /* RNStoryShare.h */,
+				84275191248E2AFB00157FD5 /* RNStoryShare.h */,
 				B3E7B5891CC2AC0600A0062D /* RNStoryShare.m */,
 				134814211AA4EA7D00B7C361 /* Products */,
-				F310292C21A5EF6800F4F039 /* RNStoryShare-Bridging-Header.h */,
 			);
 			sourceTree = "<group>";
 		};
@@ -98,11 +93,11 @@
 			};
 			buildConfigurationList = 58B511D61A9E6C8500147676 /* Build configuration list for PBXProject "RNStoryShare" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				English,
 				en,
+				Base,
 			);
 			mainGroup = 58B511D21A9E6C8500147676;
 			productRefGroup = 58B511D21A9E6C8500147676;
@@ -120,7 +115,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				B3E7B58A1CC2AC0600A0062D /* RNStoryShare.m in Sources */,
-				F310292E21A5EF6900F4F039 /* RNStoryShare.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
