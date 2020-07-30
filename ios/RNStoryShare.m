@@ -1,4 +1,5 @@
 #import "RNStoryShare.h"
+#import <Photos/Photos.h>
 
 @implementation RNStoryShare
 
@@ -9,26 +10,21 @@
 
 RCT_EXPORT_MODULE();
 
-RCT_EXPORT_METHOD(shareToInstagram:(NSDictionary *)config
-                  resolver: (RCTPromiseResolveBlock)resolve
+RCT_EXPORT_METHOD(shareToInstagram:(RCTPromiseResolveBlock)resolve
                   rejecter: (RCTPromiseRejectBlock)reject) {
-    NSURL *scheme = [NSURL URLWithString:@"instagram-stories://share"];
+   PHFetchOptions* fetchOptions = [PHFetchOptions new];
+    fetchOptions.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:NO],];
+    PHFetchResult* fetchResult = [PHAsset fetchAssetsWithOptions:fetchOptions];
+    PHAsset* assetToShare = fetchResult.firstObject;
+    NSString *path = [@"instagram://library?AssetPath=" stringByAppendingString:assetToShare.localIdentifier];
 
-    NSURL *backgroundAsset =  [NSURL URLWithString:config[@"backgroundAsset"]];
-    
-    NSData *backgroundVideo = [[NSFileManager defaultManager] contentsAtPath:backgroundAsset];
-    NSArray *pasteboardItems = @[@{@"com.instagram.sharedSticker.backgroundVideo": backgroundVideo }];
-    
-    NSDictionary *pasteboardOptions = @{UIPasteboardOptionExpirationDate : [[NSDate date] dateByAddingTimeInterval:60 * 5]};
-    
-    [[UIPasteboard generalPasteboard] setItems:pasteboardItems options:pasteboardOptions];
+    NSURL *scheme = [NSURL URLWithString: path];
     [[UIApplication sharedApplication] openURL:scheme options:@{} completionHandler:nil];
-    
 }
 
 RCT_EXPORT_METHOD(isInstagramAvailable: (RCTPromiseResolveBlock)resolve
                   rejecter: (RCTPromiseRejectBlock)reject) {
-    NSURL *scheme = [NSURL URLWithString:@"instagram-stories://share"];
+    NSURL *scheme = [NSURL URLWithString:@"instagram://app"];
     NSString *result = [[UIApplication sharedApplication] canOpenURL:scheme] == true ? @"true" : @"false";
     resolve(result);
 }
