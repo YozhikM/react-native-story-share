@@ -10,14 +10,10 @@
 
 RCT_EXPORT_MODULE();
 
-RCT_EXPORT_METHOD(shareToInstagram:(RCTPromiseResolveBlock)resolve
+RCT_EXPORT_METHOD(shareToInstagram:(NSString *) localId
+                  resolver: (RCTPromiseResolveBlock)resolve
                   rejecter: (RCTPromiseRejectBlock)reject) {
-   PHFetchOptions* fetchOptions = [PHFetchOptions new];
-    fetchOptions.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:NO],];
-    PHFetchResult* fetchResult = [PHAsset fetchAssetsWithOptions:fetchOptions];
-    PHAsset* assetToShare = fetchResult.firstObject;
-    NSString *path = [@"instagram://library?AssetPath=" stringByAppendingString:assetToShare.localIdentifier];
-
+    NSString *path = [@"instagram://library?LocalIdentifier=" stringByAppendingString:localId];
     NSURL *scheme = [NSURL URLWithString: path];
     [[UIApplication sharedApplication] openURL:scheme options:@{} completionHandler:nil];
 }
